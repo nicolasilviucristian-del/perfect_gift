@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Comenzi · povestea ta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#fffaf4;color:#242326;font-family:'DM Sans',sans-serif}.top{background:#fff;border-bottom:1px solid #eee8e1;padding:18px clamp(18px,5vw,60px);display:flex;justify-content:space-between;align-items:center}.brand{font:700 18px 'Space Grotesk'}.brand span{color:#f16e48}.top a{font-size:12px;color:#5f5b60;text-decoration:none}.wrap{max-width:1100px;margin:40px auto;padding:0 20px}.heading h1{font:600 34px 'Space Grotesk';letter-spacing:-1px;margin:0 0 6px}.heading p{font-size:13px;color:#77747b;line-height:1.6}.card{background:#fff;border:1px solid #eee8e1;border-radius:18px;padding:22px;box-shadow:0 16px 46px #39302b0c;margin-top:22px}.login{max-width:440px}.field{display:block;width:100%;border:1px solid #e7e1dc;border-radius:10px;padding:12px 13px;margin:12px 0;font:inherit}.btn{border:0;border-radius:10px;background:#242326;color:white;padding:12px 16px;font-weight:700;cursor:pointer}.btn:hover{background:#f16e48}.muted{font-size:11px;color:#77747b;line-height:1.6}.error{color:#ad4328;font-size:12px}.orders{display:grid;gap:14px}.order{border:1px solid #eee8e1;border-radius:14px;padding:16px}.order-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.order-head strong{font:600 16px 'Space Grotesk'}.order-body{display:grid;grid-template-columns:1fr 1fr;gap:5px 20px;margin:14px 0}.order-body p{font-size:11px;color:#5f5b60;margin:0;line-height:1.55;overflow-wrap:anywhere}.status{padding:8px;border-radius:8px;border:1px solid #e7e1dc;background:#fff;font:inherit;font-size:11px}.files{display:flex;gap:8px;flex-wrap:wrap}.notice{background:#fff7e7;border:1px solid #f2dfb0;border-radius:10px;padding:12px;font-size:11px;line-height:1.55;color:#76571e;margin-top:17px}.empty{padding:22px;text-align:center;color:#77747b;font-size:12px}@media(max-width:600px){.wrap{margin-top:27px}.heading h1{font-size:28px}.card{padding:16px}.order-body{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="top"><a class="brand" href="/"><span>✦</span> povestea ta · comenzi</a><a href="/">Vezi magazinul</a></header>
+  <main class="wrap">
+    <div class="heading"><h1>Comenzi</h1><p>Administrare privată. Folosește tokenul de administrare configurat în Cloudflare.</p></div>
+    <section class="card login" id="login-card"><form id="login-form"><label for="admin-token" class="muted">Token de administrare</label><input class="field" id="admin-token" type="password" autocomplete="current-password" required><button class="btn" type="submit">Deschide comenzile</button><p class="error" id="login-error" hidden></p></form></section>
+    <section id="dashboard" hidden><div class="card"><div id="orders" class="orders"><div class="empty">Se încarcă comenzile…</div></div><p class="notice">Comenzile închise ca Finalizată sau Anulată și fotografiile lor sunt șterse automat după 60 de zile de la închidere. Păstrează documentele oficiale de facturare în arhiva contabilă separată.</p></div></section>
+  </main>
+  <script>
+    const tokenField=document.querySelector('#admin-token');
+    const tokenKey='perfect-gift-admin-token';
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const auth=()=>({Authorization:`Bearer ${sessionStorage.getItem(tokenKey)||''}`});
+    const labels={new:'Nouă',in_progress:'În lucru',completed:'Finalizată',cancelled:'Anulată'};
+    async function loadOrders(){
+      const response=await fetch('/api/admin/orders',{headers:auth()});
+      if(!response.ok)throw new Error(response.status===401?'Token invalid.':'Nu am putut încărca comenzile.');
+      const data=await response.json();
+      const container=document.querySelector('#orders');
+      if(!data.orders.length){container.innerHTML='<div class="empty">Nu există comenzi încă.</div>';return}
+      container.innerHTML=data.orders.map(order=>{
+        const d=order.details,b=d.billing,s=d.delivery;
+        const ship=b.address===s.address&&b.city===s.city?'Aceeași cu facturarea':`${s.address}, ${s.city}, ${s.county} ${s.postalCode}`;
+        const photoButtons=Array.from({length:order.fileCount},(_,index)=>`<button class="btn" data-order="${esc(order.id)}" data-file="${index}" type="button">Descarcă fotografia ${index+1}</button>`).join('');
+        return `<article class="order"><div class="order-head"><strong>${esc(order.orderNumber)} · ${esc(d.characterName||'Carte personalizată')}</strong><select class="status" data-status-order="${esc(order.id)}" aria-label="Status comandă">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${order.status===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="order-body"><p><b>Creată:</b> ${esc(new Date(order.createdAt).toLocaleString('ro-RO'))}</p><p><b>Client:</b> ${esc(b.name)} · ${esc(b.phone)} · ${esc(b.email)}</p><p><b>Facturare:</b> ${esc(b.type==='company'?`${b.companyName} · CUI ${b.companyTaxId}`:'Persoană fizică')} · ${esc(b.address)}, ${esc(b.city)}, ${esc(b.county)} ${esc(b.postalCode)}</p><p><b>Livrare:</b> ${esc(ship)}</p><p><b>Carte:</b> ${esc(d.style)} · ${esc(d.format)} · ${esc(d.pages)} pagini · min. ${esc(d.panels)} cadre/pag.</p><p><b>Copertă și opțiuni:</b> ${esc(d.cover)}${d.giftWrap?' · ambalaj cadou':''} · ${d.proof?'previzualizare':'fără previzualizare'}</p><p><b>Poveste:</b> ${esc(d.story||'—')}</p><p><b>Dedicație / final:</b> ${esc(d.dedication||'—')} / ${esc(d.ending)}</p><p><b>Plată:</b> Ramburs · <b>Total estimativ:</b> ${esc(d.price)} lei</p></div><div class="files">${photoButtons}</div></article>`;
+      }).join('');
+      container.querySelectorAll('[data-status-order]').forEach(select=>select.addEventListener('change',async()=>{
+        const response=await fetch(`/api/admin/orders/${encodeURIComponent(select.dataset.statusOrder)}`,{method:'PATCH',headers:{...auth(),'content-type':'application/json'},body:JSON.stringify({status:select.value})});
+        if(!response.ok){alert('Nu am putut salva statusul comenzii.');await loadOrders();return}
+        await loadOrders();
+      }));
+      container.querySelectorAll('[data-file]').forEach(button=>button.addEventListener('click',async()=>{
+        const response=await fetch(`/api/admin/orders/${encodeURIComponent(button.dataset.order)}/files/${button.dataset.file}`,{headers:auth()});
+        if(!response.ok){alert('Fotografia nu mai este disponibilă.');return}
+        const blob=await response.blob(),download=URL.createObjectURL(blob),link=document.createElement('a');link.href=download;link.download=`${button.dataset.order}-photo-${Number(button.dataset.file)+1}`;link.click();URL.revokeObjectURL(download);
+      }));
+    }
+    async function openDashboard(token){
+      sessionStorage.setItem(tokenKey,token);
+      await loadOrders();
+      document.querySelector('#login-card').hidden=true;
+      document.querySelector('#dashboard').hidden=false;
+    }
+    document.querySelector('#login-form').addEventListener('submit',async event=>{
+      event.preventDefault();const error=document.querySelector('#login-error');error.hidden=true;
+      try{await openDashboard(tokenField.value)}catch(err){sessionStorage.removeItem(tokenKey);error.textContent=err.message;error.hidden=false}
+    });
+    const saved=sessionStorage.getItem(tokenKey);if(saved)openDashboard(saved).catch(()=>sessionStorage.removeItem(tokenKey));
+  </script>
+</body>
+</html>

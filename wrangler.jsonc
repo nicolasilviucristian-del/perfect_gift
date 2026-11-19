@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "perfect-gift",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-19",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "perfect-gift-orders",
+      "database_id": "f036ac8b-bb2d-46b7-bfb4-a6f0de742589"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ORDER_FILES",
+      "bucket_name": "perfect-gift-order-files"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  }
+}

@@ -90,12 +90,17 @@
       'Carte pentru copii':{title:'Vulpița și steaua pierdută',description:'O vulpiță prietenoasă pornește să ducă o stea acasă.',art:`<svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg"><path fill="#d9edc5" d="M0 0h120v90H0z"/><circle cx="92" cy="18" r="11" fill="#ffdb66"/><path d="m92 1 4 12 12 1-9 7 3 12-10-7-10 7 3-12-9-7 12-1z" fill="#ffdc69"/><path d="M0 69q24-20 49 0t71-1v22H0" fill="#94c28a"/><path d="m31 46 6-26 17 18m12 0 18-18 5 28" fill="#e58a4b" stroke="#674332" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="59" cy="52" rx="27" ry="22" fill="#ed9a56" stroke="#674332" stroke-width="2.5"/><ellipse cx="59" cy="59" rx="17" ry="12" fill="#fff0d5"/><circle cx="50" cy="50" r="2.5" fill="#332b2a"/><circle cx="68" cy="50" r="2.5" fill="#332b2a"/><ellipse cx="59" cy="56" rx="3" ry="2.5" fill="#503630"/><path d="M54 63q5 4 10 0" fill="none" stroke="#674332" stroke-width="1.5"/><path d="M39 74q20-8 40 0l4 13H35z" fill="#77a9dc"/><path d="m14 31 3 5 6 1-5 4 1 6-5-3-5 3 1-6-5-4 6-1z" fill="#fff7d8"/></svg>`}
     };
     const modelImages={'Comics clasic':'comics.jfif','Manga':'manga.jfif','Acuarelă':'acuarela.jfif','Cartoon':'cartoon.jfif','Noir':'noir.jfif','Carte pentru copii':'copii.jfif'};
+    const orientationFormats={
+      'Portret · 20 × 27 cm':{label:'20 × 27 cm · portret',width:178,height:238},
+      'Pătrat · 21 × 21 cm':{label:'21 × 21 cm · pătrat',width:198,height:198},
+      'Peisaj · 27 × 20 cm':{label:'27 × 20 cm · peisaj',width:238,height:176}
+    };
     function selectedStyle(){return $('input[name="style"]:checked').value}
     function update(){
       const pages=+$('#pages').value, panels=+$('#panels').value, style=selectedStyle();
       $('#pages-value').textContent=pages;$('#panels-value').textContent=panels;
       $('#sum-style').textContent=style;$('#cover-style').textContent=style+' · ediție specială';
-      const orientation=$('#orientation').value;$('#sum-format').textContent=orientation.replace(' · ',' · ').toLowerCase();
+      const format=orientationFormats[$('#orientation').value],book=$('.book');$('#sum-format').textContent=format.label;book.style.width=format.width+'px';book.style.height='auto';book.style.aspectRatio=format.width+' / '+format.height;book.style.maxWidth='100%';
       $('#sum-pages').textContent=`${pages} pag. · min. ${panels} cadre/pag.`;
       const cover=$('.chip.selected').dataset.value;$('#sum-cover').textContent=cover==='Copertă moale'?'Moale':'Cartonată';
       const wrap=$('#gift-wrap').checked;$('#wrap-row').hidden=!wrap;
